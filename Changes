@@ -1,6 +1,26 @@
 Revision history for Perl extension Mail::Procmailrc.
 
 ----------------------------
+revision 1.10
+date: 2002/07/29 18:33:25;  author: scottw;  state: Exp;  lines: +47 -53
+- allow scalar var for *::Recipe constructor
+- more docs
+----------------------------
+revision 1.9
+date: 2002/07/26 20:29:21;  author: scottw;  state: Exp;  lines: +14 -1
+- document new 'delete' method
+----------------------------
+revision 1.8
+date: 2002/07/26 20:26:09;  author: scottw;  state: Exp;  lines: +155 -6
+- added 'delete' method to Mail::Procmailrc object class; deletes an
+  object by reference
+- added tests for delete method
+----------------------------
+revision 1.7
+date: 2002/07/22 20:30:35;  author: scottw;  state: Exp;  lines: +70 -10
+- fix push to take an array for argument
+- documentation addition
+----------------------------
 revision 1.6
 date: 2002/07/09 22:12:34;  author: scottw;  state: Exp;  lines: +57 -21
 - documentation fixes

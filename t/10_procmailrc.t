@@ -12,17 +12,9 @@ my $pmrc = new Mail::Procmailrc;
 
 ## push a variable assignment
 my $v1 = new Mail::Procmailrc::Variable();
-$v1->lval('FOO');
-$v1->rval('bar');
-$pmrc->push($v1);
+$v1->lval('FOO'); $v1->rval('bar');
 
-## push another variable assignment
-$pmrc->push( new Mail::Procmailrc::Variable(['PMDIR=$HOME/.procmail']) );
-
-## push an empty line
-$pmrc->push( new Mail::Procmailrc::Literal() );
-
-## push an entire recipe
+## make an entire recipe
 my $rec = new Mail::Procmailrc::Recipe;
 $rec->flags(':0B:');
 $rec->info('## put spam away');
@@ -31,7 +23,13 @@ $rec->conditions([ q(* 1^0 this is not spam),
 		   q(* 1^0 urgent assistance),
 		 ]);
 $rec->action('$PMDIR/spam');
-$pmrc->push($rec);
+
+## push things
+$pmrc->push( $v1, 
+	     new Mail::Procmailrc::Variable(['PMDIR=$HOME/.procmail']),
+	     new Mail::Procmailrc::Literal(),
+	     $rec,
+	   );
 
 ## test that what we created matches what we imagined
 ok( $pmrc->dump(), <<'_RECIPE_' );

@@ -1,5 +1,5 @@
 use Test;
-BEGIN { $| = 1; plan(tests => 9); chdir 't' if -d 't'; }
+BEGIN { $| = 1; plan(tests => 22); chdir 't' if -d 't'; }
 use blib;
 
 use Mail::Procmailrc;
@@ -71,5 +71,56 @@ _RECIPE_
 ok( $r1->init([split(/\n/, $recipe)]));
 ok( $r1->flags(), ':0: bouncetemp.${BOUNCEPID}.lock' );
 ok( $r1->dump(), $recipe );
+
+undef $r1;
+$recipe =<<'_RECIPE_';
+:0B:
+## block evil emails
+* 1^0 people talking dirty
+* 1^0 dirty persian poetry
+* 1^0 dirty pictures
+* 1^0 xxx
+* 1^0 evil bad things
+/dev/foo
+_RECIPE_
+
+## scalar constructor
+ok( $r1 = new Mail::Procmailrc::Recipe($recipe) );
+ok( $r1->flags(), ':0B:' );
+ok( join("\n", @{$r1->info()}), '## block evil emails' );
+ok( join("\n", @{$r1->conditions()}), "* 1^0 people talking dirty\
+* 1^0 dirty persian poetry\
+* 1^0 dirty pictures\
+* 1^0 xxx\
+* 1^0 evil bad things" );
+
+ok( $r1->action(), "/dev/foo" );
+ok( $r1->dump(), $recipe );
+
+## bogus constructor (scalar ref?)
+undef $r1;
+ok( $r1 = new Mail::Procmailrc::Recipe(\$recipe) );
+ok( $r1->flags(), '' );
+ok( join("\n", @{$r1->info()}), '' );
+ok( join("\n", @{$r1->conditions()}), '' );
+ok( $r1->action(), '' );
+ok( $r1->dump(), "\n" );
+
+## piece by piece construction
+undef $r1;
+$r1 = new Mail::Procmailrc::Recipe;
+$r1->flags(':0B:');
+$r1->info(['## junk recipes']);
+$r1->conditions(['* ^My name is not Larry', '* jumpin jehosephat!']);
+$r1->action('/dev/null');
+
+ok( $r1->dump, <<_MORE_ );
+:0B:
+## junk recipes
+* ^My name is not Larry
+* jumpin jehosephat!
+/dev/null
+_MORE_
+
 
 exit;

@@ -3,6 +3,7 @@ MANIFEST
 Makefile.PL
 Procmailrc.pm
 README
+eg/procmail.cgi
 t/00_literal.t
 t/01_variable.t
 t/02_recipe.t

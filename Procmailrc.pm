@@ -1,6 +1,6 @@
 ## Scott Wiersdorf
 ## Created: Thu Jan 24 11:29:59 MST 2002
-## $Id: Procmailrc.pm,v 1.6 2002/07/09 22:12:34 scottw Exp $
+## $Id: Procmailrc.pm,v 1.10 2002/07/29 18:33:25 scottw Exp $
 
 ##################################
 package Mail::Procmailrc;
@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use Carp qw(confess);
 
-our $VERSION 	= '0.96';
+our $VERSION 	= '0.98';
 our $Debug   	= 0;
 our %RE         = (
 		   'flags'    => qr/^\s*:0/o,
@@ -188,11 +188,29 @@ sub literals {
     return [ grep { $_->isa('Mail::Procmailrc::Literal') } @{$self->rc} ];
 }
 
+## FIXME: would be nice if the arg is a $pmrc object to invoke its rc method first
 sub push {
     my $self = shift;
-    my $data = shift;
+    CORE::push @{$self->rc}, @_;
+}
 
-    CORE::push @{$self->rc}, $data;
+## FIXME: would be nice to do this w/o temporary arrays
+sub delete {
+    my $self  = shift;
+    my $seek  = shift;
+    my $found = 0;
+
+    return unless $seek && ref($seek);
+
+    my @tmp = ();
+    for my $obj ( @{$self->rc} ) {
+	CORE::push @tmp, $obj;
+	next if $found;
+	next unless $obj == $seek;
+	pop @tmp;
+	$found++;
+    }
+    $self->rc(\@tmp);
 }
 
 sub stringify {
@@ -347,8 +365,7 @@ sub literal {
 }
 
 sub stringify {
-    my $self = shift;
-    return $self->literal;
+    return $_[0]->literal;
 }
 
 sub dump {
@@ -453,8 +470,7 @@ sub variable {
 }
 
 sub stringify {
-    my $self = shift;
-    return $self->variable;
+    return $_[0]->variable;
 }
 
 sub dump {
@@ -530,6 +546,14 @@ sub init {
     $self->action('');
 
     return unless defined $data;
+
+    unless( ref($data) eq 'ARRAY' ) {
+	## don't know what this is...
+	return if ref($data);
+
+	## make an arrayref out of a scalar
+	$data = [split("\n", $data)];
+    }
 
     chomp( @$data );
 
@@ -724,45 +748,28 @@ Mail::Procmailrc - An interface to Procmail recipe files
   use Mail::Procmailrc;
 
   ## create a new procmailrc object and initialize it
-  $pmrc = new Mail::Procmailrc("$HOME/.procmail/rc.lists");
-
-  ## same as above
-  $pmrc = new Mail::Procmailrc;
-  $pmrc->read("$HOME/.procmail/rc.spam");
-
-  ## same as above
-  $pmrc = new Mail::Procmailrc;
-  $pmrc->file("$HOME/.procmail/rc.spam");
-  $pmrc->read;
-
-  ## same as above except the file attribute is left unset
-  $pmrc = new Mail::Procmailrc;
-  my $rcfile = `cat $HOME/.procmail/rc.spam`;
-  $pmrc->parse($rcfile);
-
-  ## same as above (i.e., file attribute is left unset)
-  my $rcfile = `cat $HOME/.procmail/rc.spam`;
-  $pmrc = new Mail::Procmailrc( { data => $rcfile } );
-
-  ## add a new recipe
-  $pmrc->push( new Mail::Procmailrc::Recipe($recipe) );
+  $pmrc = new Mail::Procmailrc("$HOME/.procmail/rc.spam");
 
   ## add a new variable
   $pmrc->push( new Mail::Procmailrc::Variable("FOO=bar") );
 
+  ## add a new recipe
+  $recipe =<<'_RECIPE_';
+  :0B:
+  ## this will catch evil email messages
+  * 1^0 xxx
+  * 1^0 evil things
+  * 1^0 porn and other wickedness
+  * 1^0 all kinds of cursing
+  * 1^0 lewdness, filth, etc\.
+  /var/mail/evil
+  _RECIPE_
+
+  ## add this new recipe to our procmail rc file
+  $pmrc->push( new Mail::Procmailrc::Recipe($recipe) );
+
   ## write this object to disk
-  $pmrc->flush("$HOME/.procmail/rc.spam");
-
-  ## same as above
-  $pmrc->file("$HOME/.procmail/rc.spam");
   $pmrc->flush;
-
-  ## same as above (assuming the file attribute was previously set)
-  $pmrc->flush;
-
-  ## same as above (same assumption)
-  $filename = $pmrc->file;
-  $pmrc->flush($filename);
 
 =head1 DESCRIPTION
 
@@ -783,6 +790,194 @@ which lines are comments, and which lines are recipes. It preserves
 the order in which it encounters these B<procmail> components and
 stores them as a list of objects in the main B<Mail::Procmailrc>
 object.
+
+=over 4
+
+=item B<new>
+
+Creates a new Mail::Procmailrc object.
+
+Examples:
+
+    ## 1. in memory object
+    my $pmrc = new Mail::Procmailrc;
+
+    ## 2. parses /etc/procmailrc
+    my $pmrc = new Mail::Procmailrc("/etc/procmailrc");
+
+    ## 3. parses /etc/procmailrc, makes backup
+    my $pmrc = new Mail::Procmailrc("/etc/procmailrc");
+    $pmrc->file("/etc/procmailrc.bak");
+    $pmrc->flush;   ## create a backup
+
+    $pmrc->file("/etc/procmailrc");  ## future flushes will go here
+
+    ## 4. alternative syntax: filename specified in hashref
+    my $pmrc = new Mail::Procmailrc( { 'file' => '/etc/procmailrc' } );
+
+    ## 5. alternative syntax: scalar
+    my $rc =<<_FOO_;
+    :0B
+    * 1^0 this is not spam
+    /dev/null
+    _FOO_
+    my $pmrc = new Mail::Procmailrc( { 'data' => $rc } );
+
+    ## 6. alternative syntax: array reference
+    my $rc =<<'_RCFILE_';
+    :0c:
+    /var/mail/copy
+    _RCFILE_
+    my @rc = map { "$_\n" } split(/\n/, $rcfile);
+    $pmrc = new Mail::Procmailrc( { 'data' => \@rc } );
+
+=item B<read>
+
+Sets the object's file attribute and parses the given file. If the
+file is not readable, returns undef. Normally not invoked directly.
+
+Example:
+
+    ## set $pmrc->file and parse
+    unless( $pmrc->read('/etc/procmailrc') ) {
+        die "Could not parse '/etc/procmailrc!\n";
+    }
+
+=item B<parse>
+
+Takes an array or string reference and populates the object with it.
+
+Example:
+
+    my $chunk =<<_RECIPE_;
+## begin foo section
+TMPLOGFILE=\$LOGFILE
+TMPLOGABSTRACT=\$LOGABSTRACT
+TMPVERBOSE=\$VERBOSE
+
+LOGFILE=/var/log/foolog
+LOGABSTRACT=yes
+VERBOSE=no
+
+## process the mail via foo
+:0fw
+|/usr/local/bin/foo -c /etc/mail/foo.conf
+
+LOGFILE=\$TMPLOGFILE
+LOGABSTRACT=\$TMPLOGABSTRACT
+VERBOSE=\$TMPVERBOSE
+## end spamassassin vinstall (do not remove these comments)
+
+_RECIPE_
+
+    ## make a new in-memory procmailrc file
+    my $new_pmrc = new Mail::Procmailrc;
+    $new_pmrc->parse($chunk);
+
+    ## add this new procmailrc file to our existing procmailrc file
+    $pmrc->push(@{$new_pmrc->rc});
+    $pmrc->flush;
+
+Alternatively, you can pass an array reference to B<parse>:
+
+    $new_pmrc->parse([split("\n", $chunk)]);
+
+=item B<rc>
+
+Returns a list reference. Each item in the list is either a Variable,
+Literal, or Recipe object. Items are returned in the order they were
+originally parsed. You may assign to B<rc> and rewrite the
+B<Mail::Procmailrc> object thereby.
+
+Example:
+
+    ## remove foo section from recipe file
+    my @tmp_rc = ();
+    my $foo_section = 0;
+    for my $pm_obj ( @{$pmrc->rc} ) {
+        if( $pm_obj->stringify =~ /^\#\# begin foo recipes/ ) {
+            $foo_section = 1;
+            next;
+        }
+        elsif( $pm_obj->stringify =~ /^\#\# end foo recipes/ ) {
+            $foo_section = 0;
+            next;
+        }
+        elsif( $foo_section ) {
+            next;
+        }
+        push @tmp_rc, $rc_obj;
+    }
+    $pmrc->rc(\@tmp_rc);
+    $pmrc->flush;
+
+=item B<recipes>
+
+Returns a listref of recipes in this object.
+
+=item B<variables>
+
+Returns a listref of variables in this object.
+
+=item B<literals>
+
+Returns a listref of literals in this object.
+
+=item B<push>
+
+Pushes the dat(a|um) onto this object's internal object list. If the
+object being pushed is another Mail::Procmailrc object, that object's
+B<rc> method is invoked first and the results are pushed.
+
+Example:
+
+    my $rc_objs = $old_pmrc->rc;
+    $pmrc->push( @$rc_objs );
+
+=item B<delete>
+
+Deletes an object from the main Mail::Procmailrc object:
+
+    for my $obj ( @{$pmrc->rc} ) {
+        next unless $obj->isa('Mail::Procmailrc::Recipe');
+
+        ## I lost all my enemies when I switched to the Perl Artistic License...
+        next unless $obj->info->[0] =~ /^\#\# block email from enemies/;
+        $pmrc->delete($obj);
+        last;
+    }
+
+=item B<file>
+
+Returns the path where this object will write when B<flush> is
+invoked. If B<file> is given an argument, the object's internal
+I<file> attribute is set to this path.
+
+=item B<flush>
+
+Writes the procmail object to disk in the file specified by the
+B<file> attribute. If the B<file> attribute is not set, B<flush>
+writes to STDOUT. If a filename is given as an argument, it is set as
+the objects B<file> attribute.
+
+Examples:
+
+    ## 1. flushes to whatever $pmrc->file is set to (STDOUT if file is unset)
+    $pmrc->flush;
+
+    ## 2. flushes to a specific file; future flushes will also go here
+    $pmrc->flush('/backup/etc/procmailrc');
+
+=item B<stringify>
+
+Returns the object in string representation.
+
+=item B<dump>
+
+Like B<stringify> but with nicer formatting (indentation, newlines,
+etc.). Suitable for inclusion in procmail rc files.
+
+=back
 
 =head1 Mail::Procmailrc::Variable Objects
 
@@ -933,7 +1128,12 @@ this:
     /dev/null
     _RECIPE_
 
-    $recipe_obj = new Mail::Procmailrc::Recipe([split(/\n/, $recipe)]);
+    $recipe_obj = new Mail::Procmailrc::Recipe($recipe);
+
+or the more obtuse (if you happen to already have an array or
+reference):
+
+    $recipe_obj = new Mail::Procmailrc::Recipe([split("\n", $recipe)]);
 
 The entire recipe in I<$recipe> is now contained in the
 I<$recipe_obj>. You could also piece together an object part by part:
@@ -955,8 +1155,24 @@ You can get a handle on all recipes in an rc file with the B<recipes> method:
         $conditions = $recipe->conditions;
         last;
     }
-    push @$conditions, '* 1^0 this is not SPAM';
+    push @$conditions, '* 1^0 this is not SPAM';  ## add another condition
     $pmrc->flush;  ## write out to file
+
+=head2 Important Note about I<info>
+
+The B<info> method of the B<Recipe> object is really just a procmail
+comment (or B<literal> elsewhere in this document), but because it
+appears between the B<flags> line (e.g., ':0fw') and the conditions
+(e.g., * 1^0 foo), it becomes part of the recipe itself. This is
+terribly convenient usage because it allows you to "index" your
+recipes and find them later.
+
+=head1 EXAMPLES
+
+The F<eg> directory in the B<Mail::Procmailrc> distribution contains
+at least one useful program illustrating the several uses of this
+module. Other examples may appear here in future releases as well as
+the F<eg> directory of the distribution.
 
 =head1 CAVEATS
 
@@ -1012,6 +1228,6 @@ Scott Wiersdorf <scott@perlcode.org>
 
 =head1 SEE ALSO
 
-L<perl>.
+L<procmail>, L<procmailrc(5)>, L<procmailex(5)>, L<procmailsc(5)>
 
 =cut
