@@ -13,6 +13,7 @@ t/05_nested.t
 t/06_procmailex.t
 t/07_crashme.t
 t/08_garbage.t
+t/09_crashme_again.t
 t/10_procmailrc.t
 t/11_read_flush.t
 t/12_edit.t

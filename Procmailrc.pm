@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use Carp qw(confess);
 
-our $VERSION 	= '1.02';
+our $VERSION 	= '1.03';
 our $Debug   	= 0;
 our %RE         = (
 		   'flags'    => qr/^\s*:0/o,
@@ -96,8 +96,15 @@ sub parse {
     $self->rc([]);
 
     ## make sure we're using an array reference
-    unless( 'ARRAY' eq ref($data) ) {
-	$data = [split("\n", $data)];
+    if( 'ARRAY' eq ref($data) ) {
+	chomp @$data;
+    }
+    else {
+	## we don't know how to handle other kinds of refs here
+	return if ref($data);
+
+	## split the data (implicit chomping)
+	$data = [split(/\n/, $data)];
     }
 
     ## this is the procmailrc parser
@@ -253,7 +260,7 @@ sub flush {
 	  or do {
 	      confess "Could not open '$file' for write: $!\n";
 	  };
-    } 
+    }
 
     ## no file, flush to stdout
     else {
@@ -549,15 +556,16 @@ sub init {
 
     return unless defined $data;
 
-    unless( ref($data) eq 'ARRAY' ) {
-	## don't know what this is...
+    if( 'ARRAY' eq ref($data) ) {
+	chomp @$data;
+    }
+    else {
+	## we don't know how to handle other kinds of refs here
 	return if ref($data);
 
-	## make an arrayref out of a scalar
-	$data = [split("\n", $data)];
+	## split the data (implicit chomping)
+	$data = [split(/\n/, $data)];
     }
-
-    chomp( @$data );
 
     ## required: FLAGS
   FLAGS: {
