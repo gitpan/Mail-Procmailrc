@@ -11,7 +11,7 @@ use Carp qw(confess);
 
 use vars qw( $VERSION $Debug %RE );
 
-$VERSION = '1.05';
+$VERSION = '1.06';
 $Debug   = 0;
 %RE      = (
 	    'flags'    => qr/^\s*:0/o,                   ## flags

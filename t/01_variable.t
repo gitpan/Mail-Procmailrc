@@ -50,7 +50,7 @@ ok( $v4 = new Mail::Procmailrc::Variable(\@variable, {'level' => 2} ) );
 ok( $v4->variable(), "HOSTNAME=`uname -a |\\\n          awk '{print \$2}'`" );
 ok( $v4->dump(), "    HOSTNAME=`uname -a |\\\n          awk '{print \$2}'`\n" );
 
-undef $v1, $v2, $v3, $v4, $v5;
+$v1 = $v2 = $v3 = $v4 = $v5 = undef;
 
 $variable =<<'_VARIABLE_';
 NL="

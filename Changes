@@ -1,5 +1,11 @@
 Revision history for Perl extension Mail::Procmailrc.
 
+Release 1.06
+----------------------------
+revision 1.19
+date: 2003/08/08 17:38:23;  author: scottw;  state: Exp;  lines: +1 -1
+- fix a test to test cleanly under warnings
+
 Release 1.05
 ----------------------------
 revision 1.18
