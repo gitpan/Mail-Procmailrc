@@ -1,5 +1,14 @@
 Revision history for Perl extension Mail::Procmailrc.
 
+Release 1.04
+----------------------------
+revision 1.17
+date: 2003/03/17 21:53:02;  author: scottw;  state: Exp;  lines: +43 -31
+- remove keyword 'our' and replace with 'use vars' for 5.00503
+  compatibility
+- fix typo in synopsis example
+
+Release 1.03
 ----------------------------
 revision 1.16
 date: 2002/11/20 21:24:58;  author: scottw;  state: Exp;  lines: +18 -10

@@ -6,27 +6,27 @@
 package Mail::Procmailrc;
 ##################################
 
-use 5.006;
 use strict;
-use warnings;
 use Carp qw(confess);
 
-our $VERSION 	= '1.03';
-our $Debug   	= 0;
-our %RE         = (
-		   'flags'    => qr/^\s*:0/o,
-		   'flagsm'   => qr/^\s*(:0.*)$/o,
-		   'var'      => qr/^\s*[^#\$=]+=.+/o,
-		   'varm'     => qr/^\s*([^#\$=]+=.+)$/o,
-		   'blklinem' => qr/^\s*\{\s*(.*?)\s*\}\s*$/o,
-		   'blkopen'  => qr/^\s*\{/o,
-		   'blkclose' => qr/^\s*\}/o,
-		   'blank'    => qr/^\s*$/o,
-		   'cont'     => qr/\\$/o,
-		   'comt'     => qr/^\s*\#/o,
-		   'comm'     => qr/^\s*(\#.*)$/o,
-		   'condm'    => qr/^\s*(\*.*)$/o,
-		  );
+use vars qw( $VERSION $Debug %RE );
+
+$VERSION = '1.04';
+$Debug   = 0;
+%RE      = (
+	    'flags'    => qr/^\s*:0/o,
+	    'flagsm'   => qr/^\s*(:0.*)$/o,
+	    'var'      => qr/^\s*[^#\$=]+=.+/o,
+	    'varm'     => qr/^\s*([^#\$=]+=.+)$/o,
+	    'blklinem' => qr/^\s*\{\s*(.*?)\s*\}\s*$/o,
+	    'blkopen'  => qr/^\s*\{/o,
+	    'blkclose' => qr/^\s*\}/o,
+	    'blank'    => qr/^\s*$/o,
+	    'cont'     => qr/\\$/o,
+	    'comt'     => qr/^\s*\#/o,
+	    'comm'     => qr/^\s*(\#.*)$/o,
+	    'condm'    => qr/^\s*(\*.*)$/o,
+	   );
 
 sub new {
     my $self = bless { }, shift;
@@ -389,7 +389,7 @@ use Carp qw(confess);
 
 ## FIXME: handle comments on the assignment line
 
-our $Debug = 0;
+use vars qw($Debug); $Debug = 0;
 
 sub new {
     my $self = bless { }, shift;
@@ -435,10 +435,11 @@ sub init {
     $line .= shift @$data;
 
     ## check assignment
-    confess "Could not init: bad pattern in '$line'\n" unless $line =~ /$RE{'var'}/;
+    confess "Could not init: bad pattern in '$line'\n"
+      unless $line =~ /$Mail::Procmailrc::RE{'var'}/;
 
     ## check for continuation
-    while( $line =~ /$RE{'cont'}/ ) {
+    while( $line =~ /$Mail::Procmailrc::RE{'cont'}/ ) {
 	$line .= "\n";
 	$line .= shift @$data;
     }
@@ -571,7 +572,7 @@ sub init {
   FLAGS: {
 	$line = shift @$data;
 	$line =~ s/^\s*//;
-	confess( "Not a recipe: $line\n" ) unless $line =~ /$RE{'flags'}/;
+	confess( "Not a recipe: $line\n" ) unless $line =~ /$Mail::Procmailrc::RE{'flags'}/;
 	$self->flags($line);
     }
 
@@ -582,13 +583,13 @@ sub init {
 	$line =~ s/^\s*//;
 
 	## comment/info
-	if( $line =~ s/$RE{'comm'}/$1/ ) {
+	if( $line =~ s/$Mail::Procmailrc::RE{'comm'}/$1/ ) {
 	    push @{$self->info}, $line;
 	    redo INFO;
 	}
 
 	## skip empty lines
-	if( $line =~ /$RE{'blank'}/ ) {
+	if( $line =~ /$Mail::Procmailrc::RE{'blank'}/ ) {
 	    redo INFO;
 	}
 
@@ -603,8 +604,8 @@ sub init {
 	$line =~ s/^\s*//;
 
 	## check for condition
-	if( $line =~ s/$RE{'condm'}/$1/ ) {
-	    while( $line =~ /$RE{'cont'}/ ) {
+	if( $line =~ s/$Mail::Procmailrc::RE{'condm'}/$1/ ) {
+	    while( $line =~ /$Mail::Procmailrc::RE{'cont'}/ ) {
 		$line .= "\n";         ## tack on the newline for quoted lines
 		$line .= shift @$data;
 	    }
@@ -614,12 +615,12 @@ sub init {
 	}
 
 	## check for embedded comments and skip them
-	if( $line =~ /$RE{'comt'}/ ) {
+	if( $line =~ /$Mail::Procmailrc::RE{'comt'}/ ) {
 	    redo CONDITIONS;
 	}
 
 	## check for empty lines and skip them
-	if( $line =~ /$RE{'blank'}/ ) {
+	if( $line =~ /$Mail::Procmailrc::RE{'blank'}/ ) {
 	    redo CONDITIONS;
 	}
 
@@ -634,7 +635,7 @@ sub init {
 	$line =~ s/^\s*//;
 
 	## if contains a '{' we pass it to Procmailrc
-	if( $line =~ /$RE{'blkopen'}/ ) {
+	if( $line =~ /$Mail::Procmailrc::RE{'blkopen'}/ ) {
 	    unshift @$data, $line;
 	    $self->action( Mail::Procmailrc->new( { 'data' => $data, 
 						    'level' => $self->defaults('level') } ));
@@ -642,7 +643,7 @@ sub init {
 
 	## this is a plain old action line
 	else {
-	    while( $line =~ /$RE{'cont'}/ ) {
+	    while( $line =~ /$Mail::Procmailrc::RE{'cont'}/ ) {
 		$line .= "\n";
 		$line .= shift @$data;
 	    }
@@ -761,7 +762,7 @@ Mail::Procmailrc - An interface to Procmail recipe files
   $pmrc = new Mail::Procmailrc("$HOME/.procmail/rc.spam");
 
   ## add a new variable
-  $pmrc->push( new Mail::Procmailrc::Variable("FOO=bar") );
+  $pmrc->push( new Mail::Procmailrc::Variable(["FOO=bar"]) );
 
   ## add a new recipe
   $recipe =<<'_RECIPE_';
@@ -1245,6 +1246,17 @@ We don't recursively parse file INCLUDE directives. This could be
 construed as a safety feature. The INCLUDE directives will show up,
 however, as B<Variable> objects, so you could provide the recursion
 pretty easily yourself.
+
+=back
+
+=head1 ACKNOWLEDGEMENTS
+
+=over 4
+
+=item 5 Feb 2003
+
+Erwin Lansing (erwin@lansing.dk) for 5.00503 patch and doc typo.
+Danke!
 
 =back
 
