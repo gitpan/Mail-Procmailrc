@@ -7,17 +7,17 @@ package Mail::Procmailrc;
 ##################################
 
 use strict;
-use Carp qw(confess);
+use Carp qw(carp);
 
 use vars qw( $VERSION $Debug %RE );
 
-$VERSION = '1.06';
+$VERSION = '1.08';
 $Debug   = 0;
 %RE      = (
 	    'flags'    => qr/^\s*:0/o,                   ## flags
 	    'flagsm'   => qr/^\s*(:0.*)$/o,              ## flags match
-	    'var'      => qr/^\s*[^#\$=]+=.+/o,          ## var
-	    'varm'     => qr/^\s*([^#\$=]+=.+)$/o,       ## var match
+	    'var'      => qr/^\s*[^#\$=]+=.*/o,          ## var
+	    'varm'     => qr/^\s*([^#\$=]+=.*)$/o,       ## var match
 	    'varmlq'   => qr/^[^\"]+=[^\"]*"[^\"]*$/so,  ## var multiline quote
 	    'blklinem' => qr/^\s*\{\s*(.*?)\s*\}\s*$/o,  ## block line match
 	    'blkopen'  => qr/^\s*\{/o,                   ## block open
@@ -73,7 +73,10 @@ sub read {
 
     ## FIXME: advisory lock here?
     open FILE, $file
-      or confess( "Error '$file': $!\n" );
+      or do {
+	  carp( "Error reading file '$file': $!\n" );
+	  return;
+      };
 
     ## FIXME: this is bad... Should pass in a typeglob instead...
     $self->parse( [<FILE>] );
@@ -259,7 +262,8 @@ sub flush {
     if( $file ) {
 	open FILE, ">$file"
 	  or do {
-	      confess "Could not open '$file' for write: $!\n";
+	      carp "Could not open '$file' for write: $!\n";
+	      return;
 	  };
     }
 
@@ -386,7 +390,7 @@ sub dump {
 ##################################
 package Mail::Procmailrc::Variable;
 ##################################
-use Carp qw(confess);
+use Carp qw(carp);
 
 ## FIXME: handle comments on the assignment line
 
@@ -436,8 +440,10 @@ sub init {
     $line .= shift @$data;
 
     ## check assignment
-    confess "Could not init: bad pattern in '$line'\n"
-      unless $line =~ /$Mail::Procmailrc::RE{'var'}/;
+    unless( $line =~ /$Mail::Procmailrc::RE{'var'}/ ) {
+	carp "Could not init: bad pattern in '$line'\n";
+	return;
+    }
 
     ## check for multiline quote
     if( $line =~ $Mail::Procmailrc::RE{'varmlq'} ) {
@@ -515,7 +521,7 @@ package Mail::Procmailrc::Recipe;
 
 ## FIXME: handle comments on the flags line
 
-use Carp qw(confess);
+use Carp qw(carp);
 
 sub new {
     my $self = bless { }, shift;
@@ -583,7 +589,10 @@ sub init {
   FLAGS: {
 	$line = shift @$data;
 	$line =~ s/^\s*//;
-	confess( "Not a recipe: $line\n" ) unless $line =~ /$Mail::Procmailrc::RE{'flags'}/;
+	unless( $line =~ /$Mail::Procmailrc::RE{'flags'}/ ) {
+	    carp( "Not a recipe: $line\n" );
+	    return;
+	}
 	$self->flags($line);
     }
 

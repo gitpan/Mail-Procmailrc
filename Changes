@@ -1,5 +1,38 @@
 Revision history for Perl extension Mail::Procmailrc.
 
+Release 1.08
+----------------------------
+revision 1.21
+date: 2005/02/03 23:00:16;  author: scottw;  state: Exp;  lines: +3 -3
+- allow for empty variable assignment when groking variables
+
+Release 1.07
+----------------------------
+revision 1.20
+date: 2004/01/21 16:27:50;  author: scottw;  state: Exp;  lines: +18 -9
+- change confess to carp: don't die ever
+----------------------------
+revision 1.19
+date: 2003/08/08 17:38:23;  author: scottw;  state: Exp;  lines: +1 -1
+branches:  1.19.2;
+- fix a test to test cleanly under warnings
+----------------------------
+revision 1.18
+date: 2003/08/08 17:16:34;  author: scottw;  state: Exp;  lines: +28 -17
+- allow multiline quoted variable assignment
+----------------------------
+revision 1.17
+date: 2003/03/17 21:53:02;  author: scottw;  state: Exp;  lines: +43 -31
+- remove keyword 'our' and replace with 'use vars' for 5.00503
+  compatibility
+- fix typo in synopsis example
+----------------------------
+revision 1.16
+date: 2002/11/20 21:24:58;  author: scottw;  state: Exp;  lines: +18 -10
+- fix discrepancy between parsing from file and parsing from a string
+  via split (had to re-add a chomp to make everything consistent). Do
+  not use the previous version (1.02); it contains a nasty bug in the
+
 Release 1.06
 ----------------------------
 revision 1.19

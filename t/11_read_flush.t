@@ -1,5 +1,5 @@
 use Test;
-BEGIN { $| = 1; plan(tests => 2); chdir 't' if -d 't'; }
+BEGIN { $| = 1; plan(tests => 4); chdir 't' if -d 't'; }
 use blib;
 
 ##
@@ -16,6 +16,12 @@ my $v1 = new Mail::Procmailrc::Variable();
 $v1->lval('FOO');
 $v1->rval('bar');
 $pmrc->push($v1);
+
+my $v2 = new Mail::Procmailrc::Variable();
+$v2->lval('HORK');
+$v2->rval('');
+$pmrc->push($v2);
+ok( $v2->stringify, "HORK=" );
 
 ## push another variable assignment
 $pmrc->push( new Mail::Procmailrc::Variable(['PMDIR=$HOME/.procmail']));
@@ -38,11 +44,13 @@ $pmrc->push($rec);
 $pmrc->flush("_tmp.$$");
 
 my $pmrc_new = new Mail::Procmailrc("_tmp.$$");
-ok( $pmrc->dump(), $pmrc_new->dump() );
+ok( $pmrc_new->dump(), $pmrc->dump() );
+ok( scalar(@{$pmrc_new->variables}), 3 );
 
 ## test that what we created matches what we imagined
 ok( $pmrc_new->dump(), <<'_RECIPE_' );
 FOO=bar
+HORK=
 PMDIR=$HOME/.procmail
 
 :0B:
