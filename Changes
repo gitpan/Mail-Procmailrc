@@ -1,5 +1,11 @@
 Revision history for Perl extension Mail::Procmailrc.
 
+Release 1.05
+----------------------------
+revision 1.18
+date: 2003/08/08 17:16:34;  author: scottw;  state: Exp;  lines: +28 -17
+- allow multiline quoted variable assignment
+
 Release 1.04
 ----------------------------
 revision 1.17

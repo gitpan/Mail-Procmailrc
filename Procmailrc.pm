@@ -11,21 +11,22 @@ use Carp qw(confess);
 
 use vars qw( $VERSION $Debug %RE );
 
-$VERSION = '1.04';
+$VERSION = '1.05';
 $Debug   = 0;
 %RE      = (
-	    'flags'    => qr/^\s*:0/o,
-	    'flagsm'   => qr/^\s*(:0.*)$/o,
-	    'var'      => qr/^\s*[^#\$=]+=.+/o,
-	    'varm'     => qr/^\s*([^#\$=]+=.+)$/o,
-	    'blklinem' => qr/^\s*\{\s*(.*?)\s*\}\s*$/o,
-	    'blkopen'  => qr/^\s*\{/o,
-	    'blkclose' => qr/^\s*\}/o,
-	    'blank'    => qr/^\s*$/o,
-	    'cont'     => qr/\\$/o,
-	    'comt'     => qr/^\s*\#/o,
-	    'comm'     => qr/^\s*(\#.*)$/o,
-	    'condm'    => qr/^\s*(\*.*)$/o,
+	    'flags'    => qr/^\s*:0/o,                   ## flags
+	    'flagsm'   => qr/^\s*(:0.*)$/o,              ## flags match
+	    'var'      => qr/^\s*[^#\$=]+=.+/o,          ## var
+	    'varm'     => qr/^\s*([^#\$=]+=.+)$/o,       ## var match
+	    'varmlq'   => qr/^[^\"]+=[^\"]*"[^\"]*$/so,  ## var multiline quote
+	    'blklinem' => qr/^\s*\{\s*(.*?)\s*\}\s*$/o,  ## block line match
+	    'blkopen'  => qr/^\s*\{/o,                   ## block open
+	    'blkclose' => qr/^\s*\}/o,                   ## block close
+	    'blank'    => qr/^\s*$/o,                    ## blank line
+	    'cont'     => qr/\\$/o,                      ## continuation
+	    'comt'     => qr/^\s*\#/o,                   ## comment
+	    'comm'     => qr/^\s*(\#.*)$/o,              ## comment match
+	    'condm'    => qr/^\s*(\*.*)$/o,              ## condition match
 	   );
 
 sub new {
@@ -438,10 +439,20 @@ sub init {
     confess "Could not init: bad pattern in '$line'\n"
       unless $line =~ /$Mail::Procmailrc::RE{'var'}/;
 
-    ## check for continuation
-    while( $line =~ /$Mail::Procmailrc::RE{'cont'}/ ) {
-	$line .= "\n";
-	$line .= shift @$data;
+    ## check for multiline quote
+    if( $line =~ $Mail::Procmailrc::RE{'varmlq'} ) {
+	while( @$data && $line =~ $Mail::Procmailrc::RE{'varmlq'} ) {
+	    $line .= "\n";
+	    $line .= shift @$data;
+	}
+    }
+
+    else {
+	## check for continuation
+	while( $line =~ /$Mail::Procmailrc::RE{'cont'}/ ) {
+	    $line .= "\n";
+	    $line .= shift @$data;
+	}
     }
 
     $self->variable($line);

@@ -1,5 +1,5 @@
 use Test;
-BEGIN { $| = 1; plan(tests => 20); chdir 't' if -d 't'; }
+BEGIN { $| = 1; plan(tests => 22); chdir 't' if -d 't'; }
 use blib;
 
 use Mail::Procmailrc;
@@ -51,6 +51,29 @@ $PMDIR/spam.test
 *    400^1   r[ .]*e[ .]*m[ .]*o[ .]*v[ .]*e
 *    200^0   +++++++++++++++++++++++++++++++
 $PMDIR/spam.test
+_RCFILE_
+
+ok( $pmrc->parse( $rcfile ) );
+ok( $pmrc->dump(), $rcfile );
+
+
+#########################################################
+## test recipe with a newline variable
+#########################################################
+
+$rcfile =<<'_RCFILE_';
+PMDIR=$HOME/.procmail
+NL="
+"
+
+:0
+*  -1000^0
+*    200^0   ^Subject: trashme
+{
+  LOG="Dumping${NL}"
+  :0
+  /dev/null
+}
 _RCFILE_
 
 ok( $pmrc->parse( $rcfile ) );

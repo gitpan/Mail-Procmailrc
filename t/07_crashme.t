@@ -1,5 +1,5 @@
 use Test;
-BEGIN { $| = 1; plan(tests  => 15); chdir 't' if -d 't'; }
+BEGIN { $| = 1; plan(tests  => 18); chdir 't' if -d 't'; }
 use blib;
 
 use Mail::Procmailrc;
@@ -566,6 +566,8 @@ $rcfile =<<'_RCFILE_';
 #* 2^0 B ?? =3d
 #/var/log/quarantine
 
+NL="
+"
 LOGFILE=/var/log/worm.log
 ## These are from elsewhere:
 ##
@@ -602,8 +604,11 @@ _RECIPE_
 ok( $pmrc->rc->[2]->stringify, '#:0E' );
 ok( $pmrc->rc->[3]->stringify, '#* -3^0' );
 ok( $pmrc->rc->[11]->stringify, '#/var/log/quarantine' );
-ok( $pmrc->rc->[13]->stringify, 'LOGFILE=/var/log/worm.log' );
-ok( ${$pmrc->variables}[0]->stringify, 'LOGFILE=/var/log/worm.log' );
+ok( $pmrc->rc->[13]->lval, "NL" );
+ok( $pmrc->rc->[13]->rval, qq("\n") );
+ok( $pmrc->rc->[14]->stringify, 'LOGFILE=/var/log/worm.log' );
+ok( ${$pmrc->variables}[0]->stringify, qq(NL="\n") );
+ok( ${$pmrc->variables}[1]->stringify, 'LOGFILE=/var/log/worm.log' );
 
 #use Data::Dumper;
 #print STDERR Dumper($pmrc);

@@ -1,5 +1,5 @@
 use Test;
-BEGIN { $| = 1; plan(tests => 16); chdir 't' if -d 't'; }
+BEGIN { $| = 1; plan(tests => 20); chdir 't' if -d 't'; }
 use blib;
 
 use Mail::Procmailrc;
@@ -10,6 +10,8 @@ VERBOSE=off
 LOGABSTRACT=on
 HOSTNAME=`uname -a |\
           awk '{print $2}'`
+NL="
+"
 _VARIABLE_
 my @variable = split(/\n/, $variable);
 
@@ -35,6 +37,9 @@ ok( $v4->variable(), "HOSTNAME=`uname -a |\\\n          awk '{print \$2}'`" );
 
 ok( $v4->rval(), "`uname -a |\\\n          awk '{print \$2}'`" );
 
+ok( my $v5 = new Mail::Procmailrc::Variable(\@variable) );
+ok( $v5->variable(), qq(NL="\n") );
+
 $variable = <<'_VARIABLE_';
 HOSTNAME=`uname -a |\
           awk '{print $2}'`
@@ -45,4 +50,16 @@ ok( $v4 = new Mail::Procmailrc::Variable(\@variable, {'level' => 2} ) );
 ok( $v4->variable(), "HOSTNAME=`uname -a |\\\n          awk '{print \$2}'`" );
 ok( $v4->dump(), "    HOSTNAME=`uname -a |\\\n          awk '{print \$2}'`\n" );
 
+undef $v1, $v2, $v3, $v4, $v5;
+
+$variable =<<'_VARIABLE_';
+NL="
+"
+_VARIABLE_
+$v1 = new Mail::Procmailrc::Variable([$variable]);
+ok( $v1->dump, <<_DUMP_ );
+NL="
+"
+_DUMP_
+ok( $v1->rval, qq("\n") );
 exit;
