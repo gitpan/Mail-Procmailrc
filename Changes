@@ -1,0 +1,30 @@
+Revision history for Perl extension Mail::Procmailrc.
+
+----------------------------
+revision 1.6
+date: 2002/07/09 22:12:34;  author: scottw;  state: Exp;  lines: +57 -21
+- documentation fixes
+----------------------------
+revision 1.5
+date: 2002/02/20 23:37:19;  author: scottw;  state: Exp;  lines: +2 -2
+- update version string
+----------------------------
+revision 1.4
+date: 2002/02/14 23:58:10;  author: scottw;  state: Exp;  lines: +61 -64
+- some code cleanup
+- add an undef check before regex
+- fix how init handles certain named parameters
+----------------------------
+revision 1.3
+date: 2002/02/11 22:40:52;  author: scottw;  state: Exp;  lines: +1 -3
+- clean up some old comments
+----------------------------
+revision 1.2
+date: 2002/02/11 17:25:35;  author: scottw;  state: Exp;  lines: +50 -2
+- added 'literals', 'variables', and 'recipes' methods
+----------------------------
+revision 1.1
+date: 2002/02/07 19:26:19;  author: scottw;  state: Exp;
+initial import of Mail::Procmailrc: a Perl class to parse and
+pretty-print procmail rc files.
+=============================================================================
