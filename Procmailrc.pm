@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use Carp qw(confess);
 
-our $VERSION 	= '1.00';
+our $VERSION 	= '1.01';
 our $Debug   	= 0;
 our %RE         = (
 		   'flags'    => qr/^\s*:0/o,
@@ -431,6 +431,7 @@ sub init {
 
     ## check for continuation
     while( $line =~ /$RE{'cont'}/ ) {
+	$line .= "\n";
 	$line .= shift @$data;
     }
 
@@ -784,8 +785,11 @@ Mail::Procmailrc - An interface to Procmail recipe files
 =head1 DESCRIPTION
 
 B<Mail::Procmailrc> can parse B<procmail> recipe files and store the
-contents in an object which can be later manipulated and saved. You
-may also start with a fresh, empty B<Mail::Procmailrc> object,
+contents in an object which can be later manipulated and saved (see
+L</"CAVEATS"> and L</"BUGS/TODO"> for limitations and special
+conditions).
+
+You may also start with a fresh, empty B<Mail::Procmailrc> object,
 populate it with recipes and/or variables and write it to file.
 
 Recipes and variables are written to the file in the order they're
@@ -1189,13 +1193,24 @@ Parsing is I<lossy> in two senses. Some formatting and stray lines
 may be lost. Also, array references fed to constructors will not be
 returned intact (i.e., data will be shifted out of them).
 
-=head1 BUGS
+=head1 BUGS/TODO
 
 Please let the author/maintainer know if you find any bugs (providing
 a regression test would also be helpful; see the testing format in
 the 't' directory).
 
 =over 4
+
+=item *
+
+We can't parse old-style "counting" syntax (before v2.90, 1993/07/01):
+
+    :2:
+    ^Subject:.*foo
+    From:.*foo@bar\.com
+    /tmp/eli/foo
+
+Thanks to <eli@panix.com> (8 Oct 2002) for finding this bug.
 
 =item *
 

@@ -1,5 +1,5 @@
 use Test;
-BEGIN { $| = 1; plan(tests => 18); chdir 't' if -d 't'; }
+BEGIN { $| = 1; plan(tests => 20); chdir 't' if -d 't'; }
 use blib;
 
 use Mail::Procmailrc;
@@ -237,6 +237,36 @@ PMDIR=$HOME/.procmail
 _NEWFILE_
 
 ok( $pmrc->dump, $rcfile );
+
+## test a contiuation variable assignment
+
+$rcfile =<<'_RCFILE_';
+LOGFILE=/var/log/quarantine.log
+ext='(a(d[ep]|r[cj]|s[dmxp]|u|vi)|b(a[st]|mp|z[0-9]?)|c(an|hm|il|lass|md|om|(p[lp]|\+\+)?|rt|sv)|\
+      d(at|e?b|ll|o[ct])|e(ml|ps?|xe)|g(if|z?)|h(lp|t(a|ml?)|(pp|\+\+)?)|i(n[cfis]|sp)|\
+      j(ava|pe?g|se?|sp|tmpl)|kbf|l(ha|nk|og|yx)|m(d[abew]|p(e?g|[32])|s[cipt])|ocx|\
+      p(a(tch|s)|c[dsx]|df|h(p[0-9]?|tml?)|if|[lm?]|n[gm]|[po][st]|p?s)|r(a[mr]|eg|pm|tf)|\
+      s(c[rt]|h([bs]|tml?)|lp|ql|ys)?|t(ar|ex|gz|iff?|xt)|u(pd|rl|x)|vb[es]?|\
+      w(av|m[szd]|p(d|[0-9]?)|s[cfh])|x(al|[pb]m|l[stw])|z(ip|oo))'
+ws = '[	 ]*($[	 ]+)*'
+dq = '"'
+
+## generic exe attachment
+:0H
+#* 1^0 $ ^content-type:${ws}(multipart/(mixed|application|signed|encrypted))|(application/)
+* 4^0 $ ^content-disposition:${ws}attachment;${ws}.*name${ws}=${ws}${dq}?.*\.${ext}(\..*)?${dq}?${ws}$
+{
+  :0:
+  * $ $=^0
+  * -1^0 B ?? $ ^content-type:${ws}text/plain
+  * -1^0 B ?? $ ^content-type:${ws}text/html
+  *  1^0 B ?? $ ^content-transfer-encoding:${ws}base64
+  /var/log/quarantine
+}
+_RCFILE_
+
+ok( $pmrc->parse($rcfile) );
+ok( $pmrc->dump, $rcfile);
 
 #########################################################
 ## test file constructor

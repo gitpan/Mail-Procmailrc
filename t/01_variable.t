@@ -11,7 +11,7 @@ LOGABSTRACT=on
 HOSTNAME=`uname -a |\
           awk '{print $2}'`
 _VARIABLE_
-my @variable = map { "$_\n" } split(/\n/, $variable);
+my @variable = split(/\n/, $variable);
 
 ## constructor
 ok( my $v1 = new Mail::Procmailrc::Variable(\@variable) );
@@ -39,7 +39,7 @@ $variable = <<'_VARIABLE_';
 HOSTNAME=`uname -a |\
           awk '{print $2}'`
 _VARIABLE_
-@variable = map { "$_\n" } split(/\n/, $variable);
+@variable = split(/\n/, $variable);
 
 ok( $v4 = new Mail::Procmailrc::Variable(\@variable, {'level' => 2} ) );
 ok( $v4->variable(), "HOSTNAME=`uname -a |\\\n          awk '{print \$2}'`" );

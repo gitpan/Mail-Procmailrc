@@ -1,4 +1,4 @@
-Mail::Procmailrc version 0.98
+Mail::Procmailrc version 1.01
 =============================
 
 Mail::Procmailrc is a pure Perl module that can read and write
@@ -16,13 +16,18 @@ SAMPLE USAGE
 
     $pmrc = new Mail::Procmailrc("$HOME/.procmail/rc.spam");
 
+    ## find the recipe we're looking for
     my $conditions;
     for my $recipe ( @{$pmrc->recipes} ) {
 	next unless $recipe->info->[0] =~ /^\s*\#\# this recipe is for spam/io;
 	$conditions = $recipe->conditions;
 	last;
     }
+
+    ## add another condition to this recipe
     push @$conditions, '* 1^0 this is not SPAM';
+
+    ## write back out to disk
     $pmrc->flush;
 
 EXAMPLES
