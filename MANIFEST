@@ -16,3 +16,4 @@ t/08_garbage.t
 t/10_procmailrc.t
 t/11_read_flush.t
 t/12_edit.t
+t/13_copy.t

@@ -1,6 +1,30 @@
 Revision history for Perl extension Mail::Procmailrc.
 
 ----------------------------
+revision 1.15
+date: 2002/11/20 18:55:50;  author: scottw;  state: Exp;  lines: +4 -3
+- fix nested recipe bug (action object was not stopping after final curly brace)
+- fix comment being parsed as var bug (tightened regex)
+----------------------------
+revision 1.14
+date: 2002/11/16 00:08:07;  author: scottw;  state: Exp;  lines: +19 -4
+- fix bug for variable assignments for continuation lines (ending with backslash)
+- make note in TODO/BUGS section about not being able to parse old-style procmailrc files
+----------------------------
+revision 1.13
+date: 2002/08/27 18:27:29;  author: scottw;  state: Exp;  lines: +21 -11
+- minor code fixes, doc fixes, updated tests
+- comment changes in procmail.cgi
+----------------------------
+revision 1.12
+date: 2002/07/30 17:59:19;  author: scottw;  state: Exp;  lines: +2 -2
+- license fix to match README
+----------------------------
+revision 1.11
+date: 2002/07/30 17:56:30;  author: scottw;  state: Exp;  lines: +20 -21
+- update version
+- fix whitespace problem in POD
+----------------------------
 revision 1.10
 date: 2002/07/29 18:33:25;  author: scottw;  state: Exp;  lines: +47 -53
 - allow scalar var for *::Recipe constructor

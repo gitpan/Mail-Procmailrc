@@ -1,4 +1,4 @@
-Mail::Procmailrc version 1.01
+Mail::Procmailrc version 1.02
 =============================
 
 Mail::Procmailrc is a pure Perl module that can read and write

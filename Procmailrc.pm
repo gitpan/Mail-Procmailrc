@@ -11,13 +11,13 @@ use strict;
 use warnings;
 use Carp qw(confess);
 
-our $VERSION 	= '1.01';
+our $VERSION 	= '1.02';
 our $Debug   	= 0;
 our %RE         = (
 		   'flags'    => qr/^\s*:0/o,
 		   'flagsm'   => qr/^\s*(:0.*)$/o,
-		   'var'      => qr/^\s*[^\$=]+=.+/o,
-		   'varm'     => qr/^\s*([^\$=]+=.+)$/o,
+		   'var'      => qr/^\s*[^#\$=]+=.+/o,
+		   'varm'     => qr/^\s*([^#\$=]+=.+)$/o,
 		   'blklinem' => qr/^\s*\{\s*(.*?)\s*\}\s*$/o,
 		   'blkopen'  => qr/^\s*\{/o,
 		   'blkclose' => qr/^\s*\}/o,
@@ -150,6 +150,7 @@ sub parse {
 	elsif( $line =~ /$RE{'blkclose'}/ ) {
 	    $self->level($self->level - 1);
 	    $self->push( Mail::Procmailrc::Literal->new($line, {'level' => $self->level}) );
+	    last;
 	}
 
 	## something else

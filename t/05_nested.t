@@ -1,5 +1,5 @@
 use Test;
-BEGIN { $| = 1; plan(tests  => 4); chdir 't' if -d 't'; }
+BEGIN { $| = 1; plan(tests  => 10); chdir 't' if -d 't'; }
 use blib;
 
 use Mail::Procmailrc;
@@ -108,5 +108,62 @@ _RCFILE_
 
 ok( $pmrc->parse( $rcfile ) );
 ok( $pmrc->dump(), $rcfile );
+
+$rcfile =<<'_RCFILE_';
+:0H
+#* 1^0 $ ^content-type:${ws}(multipart/(mixed|application|signed|encrypted))|(application/)
+* 4^0 $ ^content-disposition:${ws}attachment;${ws}.*name${ws}=${ws}${dq}?.*\.${ext}(\..*)?${dq}?${ws}$
+{
+  :0:
+  * $ $=^0
+  * -1^0 B ?? $ ^content-type:${ws}text/plain
+  * -1^0 B ?? $ ^content-type:${ws}text/html
+  *  1^0 B ?? $ ^content-transfer-encoding:${ws}base64
+  /var/log/quarantine
+}
+_RCFILE_
+
+ok( $pmrc->parse( $rcfile ) );
+ok( $pmrc->dump(), $rcfile );
+ok( ${$pmrc->rc}[0]->action->stringify, <<'_ACTION_' );
+{
+  :0:
+  * $ $=^0
+  * -1^0 B ?? $ ^content-type:${ws}text/plain
+  * -1^0 B ?? $ ^content-type:${ws}text/html
+  *  1^0 B ?? $ ^content-transfer-encoding:${ws}base64
+  /var/log/quarantine
+}
+_ACTION_
+
+## try with some stuff after the action line
+$rcfile =<<'_RCFILE_';
+:0H
+#* 1^0 $ ^content-type:${ws}(multipart/(mixed|application|signed|encrypted))|(application/)
+* 4^0 $ ^content-disposition:${ws}attachment;${ws}.*name${ws}=${ws}${dq}?.*\.${ext}(\..*)?${dq}?${ws}$
+{
+  :0:
+  * $ $=^0
+  * -1^0 B ?? $ ^content-type:${ws}text/plain
+  * -1^0 B ?? $ ^content-type:${ws}text/html
+  *  1^0 B ?? $ ^content-transfer-encoding:${ws}base64
+  /var/log/quarantine
+}
+
+## this is a joke
+_RCFILE_
+
+ok( $pmrc->parse( $rcfile ) );
+ok( $pmrc->dump(), $rcfile );
+ok( ${$pmrc->rc}[0]->action->stringify, <<'_ACTION_' );
+{
+  :0:
+  * $ $=^0
+  * -1^0 B ?? $ ^content-type:${ws}text/plain
+  * -1^0 B ?? $ ^content-type:${ws}text/html
+  *  1^0 B ?? $ ^content-transfer-encoding:${ws}base64
+  /var/log/quarantine
+}
+_ACTION_
 
 exit;

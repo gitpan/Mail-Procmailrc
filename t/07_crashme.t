@@ -1,5 +1,5 @@
 use Test;
-BEGIN { $| = 1; plan(tests  => 6); chdir 't' if -d 't'; }
+BEGIN { $| = 1; plan(tests  => 15); chdir 't' if -d 't'; }
 use blib;
 
 use Mail::Procmailrc;
@@ -539,6 +539,71 @@ _RCFILE_
 
 ok( $pmrc->parse( $rcfile ) );
 ok( $pmrc->dump(), $rcfile );
+
+## this subset of the above tests a bug found 20 Nov 2002 where the
+## parser sucked the whole file
+$rcfile =<<'_RCFILE_';
+:0H
+#* 1^0 $ ^content-type:${ws}(multipart/(mixed|application|signed|encrypted))|(application/)
+* 4^0 $ ^content-disposition:${ws}attachment;${ws}.*name${ws}=${ws}${dq}?.*\.${ext}(\..*)?${dq}?${ws}$
+{
+  :0:
+  * $ $=^0
+  * -1^0 B ?? $ ^content-type:${ws}text/plain
+  * -1^0 B ?? $ ^content-type:${ws}text/html
+  *  1^0 B ?? $ ^content-transfer-encoding:${ws}base64
+  /var/log/quarantine
+}
+
+#:0E
+#* -3^0
+#* 4^0 B ?? $ name${ws}=${ws}${dq}?.*\.${ext}(\..*)?${dq}?${ws}$
+#* 4^0 B ?? $ begin${ws}[0-9]+${ws}.*\.${ext}(\..*)?${ws}$
+#* 4^0 B ?? $ ^content-type:${ws}application/
+#* 2^0 B ?? $ ^content-transfer-encoding:${ws}base64
+#* 1^0 B ?? \<(!doctype|[sp]?h(tml|ead)|title|body)
+#* 2^0 B ?? \<(app|bgsound|div|embed|form|i?l(ayer|ink)|img|i?frame(set)?|meta|object|s(cript|tyle))
+#* 2^0 B ?? =3d
+#/var/log/quarantine
+
+LOGFILE=/var/log/worm.log
+## These are from elsewhere:
+##
+## sircam virus
+:0
+* > 100000
+* B ?? (in order to have your advice|que me des tu punto de vista)
+/dev/null
+_RCFILE_
+
+ok( $pmrc->parse( $rcfile ) );
+ok( $pmrc->dump(), $rcfile );
+ok( ${$pmrc->recipes}[0]->dump, <<'_RECIPE_' );
+:0H
+#* 1^0 $ ^content-type:${ws}(multipart/(mixed|application|signed|encrypted))|(application/)
+* 4^0 $ ^content-disposition:${ws}attachment;${ws}.*name${ws}=${ws}${dq}?.*\.${ext}(\..*)?${dq}?${ws}$
+{
+  :0:
+  * $ $=^0
+  * -1^0 B ?? $ ^content-type:${ws}text/plain
+  * -1^0 B ?? $ ^content-type:${ws}text/html
+  *  1^0 B ?? $ ^content-transfer-encoding:${ws}base64
+  /var/log/quarantine
+}
+_RECIPE_
+
+ok( ${$pmrc->recipes}[1]->dump, <<'_RECIPE_' );
+:0
+* > 100000
+* B ?? (in order to have your advice|que me des tu punto de vista)
+/dev/null
+_RECIPE_
+
+ok( $pmrc->rc->[2]->stringify, '#:0E' );
+ok( $pmrc->rc->[3]->stringify, '#* -3^0' );
+ok( $pmrc->rc->[11]->stringify, '#/var/log/quarantine' );
+ok( $pmrc->rc->[13]->stringify, 'LOGFILE=/var/log/worm.log' );
+ok( ${$pmrc->variables}[0]->stringify, 'LOGFILE=/var/log/worm.log' );
 
 #use Data::Dumper;
 #print STDERR Dumper($pmrc);
