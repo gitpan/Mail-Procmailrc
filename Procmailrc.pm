@@ -1,6 +1,6 @@
 ## Scott Wiersdorf
 ## Created: Thu Jan 24 11:29:59 MST 2002
-## $Id: Procmailrc.pm,v 1.10 2002/07/29 18:33:25 scottw Exp $
+## $Id: Procmailrc.pm,v 1.12 2002/07/30 17:59:19 scottw Exp $
 
 ##################################
 package Mail::Procmailrc;
@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use Carp qw(confess);
 
-our $VERSION 	= '0.98';
+our $VERSION 	= '1.00';
 our $Debug   	= 0;
 our %RE         = (
 		   'flags'    => qr/^\s*:0/o,
@@ -164,6 +164,7 @@ sub parse {
     return 1;
 }
 
+## FIXME: should be checks here for array refs/lists
 sub rc {
     my $self = shift;
     my $data = shift;
@@ -188,7 +189,6 @@ sub literals {
     return [ grep { $_->isa('Mail::Procmailrc::Literal') } @{$self->rc} ];
 }
 
-## FIXME: would be nice if the arg is a $pmrc object to invoke its rc method first
 sub push {
     my $self = shift;
     CORE::push @{$self->rc}, @_;
@@ -231,9 +231,9 @@ sub dump {
     ## dump our stack
     else {
 	for my $elem ( @{$self->rc} ) {
+	    next unless defined $elem;
 	    $output .= $elem->dump;
 	}
-#	$output .= "\n";
     }
 
     return $output;
@@ -700,26 +700,26 @@ sub flags {
     my $self = shift;
     my $data = shift;
 
-    ## FIXME: don't need to pass 'level' info to new obj?
     return ( defined $data 
 	     ? $self->{FLAGS} = Mail::Procmailrc::Literal->new($data)
 	     : $self->{FLAGS}->stringify );
 }
 
-## data will be an array ref
+## data will be an array ref; if the data is a scalar, split it and
+## make it a list ref
 sub info {
     my $self = shift;
     my $data = shift;
 
-    ## FIXME: I guess this is safe enough...
-    if( defined $data && 'ARRAY' ne ref($data) ) {
-	$data = [$data];
+    if( defined $data && !ref($data) ) {
+	$data = [split(/\n/, $data)];
     }
 
     return ( defined $data ? $self->{INFO} = $data : $self->{INFO} );
 }
 
 ## data will be an array ref upon which we push lines like '* 1^0 foo'
+## FIXME: do we want to split scalars like we do for 'info'?
 sub conditions {
     my $self = shift;
     my $data = shift;
@@ -767,6 +767,16 @@ Mail::Procmailrc - An interface to Procmail recipe files
 
   ## add this new recipe to our procmail rc file
   $pmrc->push( new Mail::Procmailrc::Recipe($recipe) );
+
+  ## add another condition to our recipe (we shoulda left a scalar
+  ## handle lying around, but this illustrates something useful)
+  for my $obj ( @{$pmrc->rc} ) {
+      ## find the recipe we just added by its 'info' string
+      next unless $obj->stringify =~ /^\#\# this will catch evil email messages/m;
+
+      ## we want to block emails about censorship, too ;o)
+      push @{$obj->conditions}, '* 1^0 censor(ship|ing)?'
+  }
 
   ## write this object to disk
   $pmrc->flush;
@@ -850,25 +860,24 @@ Takes an array or string reference and populates the object with it.
 Example:
 
     my $chunk =<<_RECIPE_;
-## begin foo section
-TMPLOGFILE=\$LOGFILE
-TMPLOGABSTRACT=\$LOGABSTRACT
-TMPVERBOSE=\$VERBOSE
-
-LOGFILE=/var/log/foolog
-LOGABSTRACT=yes
-VERBOSE=no
-
-## process the mail via foo
-:0fw
-|/usr/local/bin/foo -c /etc/mail/foo.conf
-
-LOGFILE=\$TMPLOGFILE
-LOGABSTRACT=\$TMPLOGABSTRACT
-VERBOSE=\$TMPVERBOSE
-## end spamassassin vinstall (do not remove these comments)
-
-_RECIPE_
+    ## begin foo section
+    TMPLOGFILE=\$LOGFILE
+    TMPLOGABSTRACT=\$LOGABSTRACT
+    TMPVERBOSE=\$VERBOSE
+    
+    LOGFILE=/var/log/foolog
+    LOGABSTRACT=yes
+    VERBOSE=no
+    
+    ## process the mail via foo
+    :0fw
+    |/usr/local/bin/foo -c /etc/mail/foo.conf
+    
+    LOGFILE=\$TMPLOGFILE
+    LOGABSTRACT=\$TMPLOGABSTRACT
+    VERBOSE=\$TMPVERBOSE
+    ## end spamassassin vinstall (do not remove these comments)
+    _RECIPE_
 
     ## make a new in-memory procmailrc file
     my $new_pmrc = new Mail::Procmailrc;
@@ -895,11 +904,11 @@ Example:
     my @tmp_rc = ();
     my $foo_section = 0;
     for my $pm_obj ( @{$pmrc->rc} ) {
-        if( $pm_obj->stringify =~ /^\#\# begin foo recipes/ ) {
+        if( $pm_obj->stringify =~ /^\#\# begin foo recipes/m ) {
             $foo_section = 1;
             next;
         }
-        elsif( $pm_obj->stringify =~ /^\#\# end foo recipes/ ) {
+        elsif( $pm_obj->stringify =~ /^\#\# end foo recipes/m ) {
             $foo_section = 0;
             next;
         }
@@ -1220,7 +1229,7 @@ pretty easily yourself.
 Copyright 2002 Scott Wiersdorf.
 
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+it under the terms of the Perl Artistic License.
 
 =head1 AUTHOR
 

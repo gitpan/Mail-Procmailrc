@@ -1,5 +1,5 @@
 use Test;
-BEGIN { $| = 1; plan(tests => 22); chdir 't' if -d 't'; }
+BEGIN { $| = 1; plan(tests => 24); chdir 't' if -d 't'; }
 use blib;
 
 use Mail::Procmailrc;
@@ -122,5 +122,24 @@ ok( $r1->dump, <<_MORE_ );
 /dev/null
 _MORE_
 
+## check to see if info converts non-array refs
+undef $r1;
+$r1 = new Mail::Procmailrc::Recipe;
+$r1->flags(':0B:');
+$r1->info("## junk recipes
+## here's looking at you, kid");
+$r1->conditions(['* ^My name is not Larry', '* jumpin jehosephat!']);
+$r1->action('/dev/null');
+
+ok( $r1->dump, <<_MORE_ );
+:0B:
+## junk recipes
+## here's looking at you, kid
+* ^My name is not Larry
+* jumpin jehosephat!
+/dev/null
+_MORE_
+
+ok( $r1->info->[1], "## here's looking at you, kid" );
 
 exit;

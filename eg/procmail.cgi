@@ -21,9 +21,9 @@ use strict;
 ## WARNING * ACHTUNG * AVISO ##
 ##
 ## This program modifies /etc/procmailrc (or whatever you've set
-## $procmailrc to point to). This program is provided AS IS under
-## the terms of the Perl Artistic License to illustrate some possible
-## uses of Mail::Procmailrc.
+## $procmailrc below to point to). This program is provided AS IS
+## under the terms of the Perl Artistic License to illustrate some
+## possible uses of Mail::Procmailrc.
 ##
 ## This program inherently is a security problem because:
 ##
@@ -32,7 +32,7 @@ use strict;
 ##    server is running with elevated privileges, which is usually a
 ##    no-no).
 ## b) it provides no authentication mechanism (do you want _everybody_
-##    to add/remove recipes?)
+##    to add/remove recipes to _your_ procmailrc file?)
 ## c) any globally writable /etc/procmailrc file is really dangerous
 ##    (imagine someone writing your procmail action line as:
 ##
