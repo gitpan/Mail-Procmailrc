@@ -11,7 +11,7 @@ use Carp qw(carp);
 
 use vars qw( $VERSION $Debug %RE );
 
-$VERSION = '1.08';
+$VERSION = '1.09';
 $Debug   = 0;
 %RE      = (
 	    'flags'    => qr/^\s*:0/o,                   ## flags
@@ -600,6 +600,7 @@ sub init {
   INFO: {
 	## get a line
 	$line = shift @$data;
+	last INFO unless defined $line;
 	$line =~ s/^\s*//;
 
 	## comment/info
@@ -621,6 +622,7 @@ sub init {
   CONDITIONS: {
 	## get a line
 	$line = shift @$data;
+	last CONDITIONS unless defined $line;
 	$line =~ s/^\s*//;
 
 	## check for condition
@@ -652,6 +654,7 @@ sub init {
   ACTION: {
 	## get a line
 	$line = shift @$data;
+	last ACTION unless defined $line;
 	$line =~ s/^\s*//;
 
 	## if contains a '{' we pass it to Procmailrc

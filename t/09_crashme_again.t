@@ -1,5 +1,5 @@
 use Test;
-BEGIN { $| = 1; plan(tests  => 13); chdir 't' if -d 't'; }
+BEGIN { $| = 1; plan(tests  => 15); chdir 't' if -d 't'; }
 use blib;
 
 use Mail::Procmailrc;
@@ -152,5 +152,18 @@ ok( $pmrc->flush( ".newprocmailrc-$$" ) );
 undef $pmrc;
 ok( $pmrc = new Mail::Procmailrc( ".newprocmailrc-$$" ) );
 ok( $pmrc->dump, $rcfile );
+
+##
+## this is bad syntax and causes an infinite loop in the Recipe::init()
+##
+undef $pmrc;
+$rcfile =<<'_BROKEN_';
+:0
+#some_action
+_BROKEN_
+
+$pmrc = new Mail::Procmailrc;
+ok( $pmrc->parse( $rcfile ) );  ## infinite loop begins here
+ok( $pmrc->dump(), $rcfile );
 
 END { unlink (".procmailrc-$$", ".newprocmailrc-$$", ".newprocmailrc2-$$") }

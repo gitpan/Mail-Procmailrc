@@ -1,5 +1,15 @@
 Revision history for Perl extension Mail::Procmailrc.
 
+Release 1.09
+----------------------------
+revision 1.23
+date: 2005/06/09 17:03:43;  author: scottw;  state: Exp;  lines: +1 -1
+- version bump
+----------------------------
+revision 1.22
+date: 2005/06/09 17:02:33;  author: scottw;  state: Exp;  lines: +3 -0
+- cure for infinite looping on certain broken recipes
+
 Release 1.08
 ----------------------------
 revision 1.21
